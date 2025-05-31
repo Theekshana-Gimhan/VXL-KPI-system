@@ -1,0 +1,25 @@
+﻿@model AdmissionsDataEntryViewModel
+
+<h2>Admissions KPI Entry</h2>
+<form asp-action="Create" method="post">
+    <div>
+        <label for="Date">Date:</label>
+        <input type="date" asp-for="Date" class="form-control" />
+    </div>
+
+    @for (int i = 0; i < Model.CounselorKPIs.Count; i++)
+    {
+        <h3>@Model.CounselorKPIs[i].CounselorName</h3>
+        <input type="hidden" asp-for="CounselorKPIs[i].CounselorID" />
+        <div>
+            <label for="CounselorKPIs_@(i)__Applications">Applications:</label>
+            <input type="number" asp-for="CounselorKPIs[i].Applications" class="form-control" min="0" />
+        </div>
+        <div>
+            <label for="CounselorKPIs_@(i)__Consultations">Consultations:</label>
+            <input type="number" asp-for="CounselorKPIs[i].Consultations" class="form-control" min="0" />
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>

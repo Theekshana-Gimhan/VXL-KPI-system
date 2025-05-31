@@ -1,0 +1,30 @@
+﻿@model VasaConsultingDataEntryViewModel
+
+<h2>Vasa Consulting KPI Entry</h2>
+<form asp-action="Create" method="post">
+    <div>
+        <label for="Date">Date:</label>
+        <input type="date" asp-for="Date" class="form-control" />
+    </div>
+
+    <div>
+        <label for="Enquiries">Enquiries:</label>
+        <input type="number" asp-for="Enquiries" class="form-control" min="0" />
+    </div>
+
+    @for (int i = 0; i < Model.StaffKPIs.Count; i++)
+    {
+        <h3>@Model.StaffKPIs[i].StaffName</h3>
+        <input type="hidden" asp-for="StaffKPIs[i].CounselorID" />
+        <div>
+            <label for="StaffKPIs_@(i)__Consultations">Consultations:</label>
+            <input type="number" asp-for="StaffKPIs[i].Consultations" class="form-control" min="0" />
+        </div>
+        <div>
+            <label for="StaffKPIs_@(i)__Conversions">Conversions:</label>
+            <input type="number" asp-for="StaffKPIs[i].Conversions" class="form-control" min="0" />
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>

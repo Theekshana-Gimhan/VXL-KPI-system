@@ -43,4 +43,27 @@ app.MapControllerRoute(
 app.MapRazorPages()
    .WithStaticAssets();
 
+//This populates the database with departments and counselors from your whiteboards when the app first runs.
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (!context.Departments.Any())
+    {
+        context.Departments.AddRange(
+            new Department { Name = "Admissions" },
+            new Department { Name = "Vasa Consulting" }
+        );
+        context.SaveChanges();
+
+        context.Counselors.AddRange(
+            new Counselor { Name = "D.W.", DepartmentID = 1 },  // Admissions
+            new Counselor { Name = "A.S.", DepartmentID = 1 },
+            new Counselor { Name = "M.B.", DepartmentID = 2 },  // Vasa Consulting
+            new Counselor { Name = "C.J.", DepartmentID = 2 }
+        );
+        context.SaveChanges();
+    }
+}
+
 app.Run();
