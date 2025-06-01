@@ -1,0 +1,109 @@
+﻿@model DashboardViewModel
+
+<h2>KPI Dashboard</h2>
+
+<!-- Filter Form -->
+<form asp-action="Index" method="get" class="filter-form">
+    <div class="form-group">
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="department">Department:</label>
+        <select id="department" name="department" class="form-control">
+            @foreach (var dept in Model.Departments)
+            {
+                <option value="@dept" selected="@(dept == Model.SelectedDepartment)">@dept</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Apply Filters</button>
+    <button type="button" class="btn btn-secondary" onclick="window.location.href=window.location.href">Refresh</button>
+</form>
+
+<!-- Admissions KPIs -->
+<h3>Admissions</h3>
+@if (Model.AdmissionsKPIs.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>KPI Type</th>
+                <th>Counselor</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kpi in Model.AdmissionsKPIs)
+            {
+                <tr>
+                    <td>@kpi.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@kpi.KPItype</td>
+                    <td>@kpi.CounselorName</td>
+                    <td>@kpi.TotalValue</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No Admissions KPIs available for the selected filters.</p>
+}
+
+<!-- Vasa Consulting KPIs -->
+<h3>Vasa Consulting</h3>
+@if (Model.VasaConsultingKPIs.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>KPI Type</th>
+                <th>Staff</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kpi in Model.VasaConsultingKPIs)
+            {
+                <tr>
+                    <td>@kpi.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@kpi.KPItype</td>
+                    <td>@(kpi.CounselorName ?? "Department")</td>
+                    <td>@kpi.TotalValue</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No Vasa Consulting KPIs available for the selected filters.</p>
+}
+
+<style>
+    .filter-form {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .form-group {
+        margin-bottom: 0;
+    }
+    .form-control {
+        display: inline-block;
+        width: auto;
+    }
+    .table {
+        margin-bottom: 20px;
+    }
+</style>
