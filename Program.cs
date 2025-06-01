@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using VXL_KPI_system.Data;
 using VXL_KPI_system.Models;
 using System.Threading.Tasks;
+using QuestPDF.Infrastructure;
 
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
