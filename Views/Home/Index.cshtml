@@ -11,6 +11,7 @@
     <div class="button-container">
         <a asp-action="Create" asp-controller="Admissions" class="btn btn-primary">Add Admissions KPI</a>
         <a asp-action="Create" asp-controller="VasaConsulting" class="btn btn-primary">Add Vasa Consulting KPI</a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-success">View Dashboard</a>
     </div>
 }
 else
@@ -21,6 +22,8 @@ else
 <style>
     .button-container {
         margin-top: 20px;
+        display: flex;
+        gap: 15px;
     }
 
     .btn {

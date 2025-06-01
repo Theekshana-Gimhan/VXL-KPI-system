@@ -1,11 +1,14 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using VXL_KPI_system.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VXL_KPI_system.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
+
         private readonly ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)
