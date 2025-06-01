@@ -13,6 +13,7 @@ namespace VXL_KPI_system.Controllers
             _logger = logger;
         }
 
+        // Removed duplicate Index method to resolve CS0111 error
         public IActionResult Index()
         {
             return View();
