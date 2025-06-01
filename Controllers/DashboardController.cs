@@ -23,7 +23,7 @@ namespace VXL_KPI_system.Controllers
             Console.WriteLine($"Loading Dashboard with StartDate: {startDate}, EndDate: {endDate}, Department: {department}");
 
             // Set default date range if not provided
-            startDate ??= DateTime.Today.AddDays(-30); // Last 30 days
+            startDate ??= DateTime.Today.AddDays(-30);
             endDate ??= DateTime.Today;
 
             // Get all departments for the filter dropdown
@@ -75,6 +75,43 @@ namespace VXL_KPI_system.Controllers
                 .ThenBy(k => k.CounselorName ?? "Department")
                 .ToList();
 
+            // Compute detailed metrics
+            int totalAdmissionsKPIs = admissionsKPIs.Sum(k => k.TotalValue);
+            int totalVasaConsultingKPIs = vasaConsultingKPIs.Sum(k => k.TotalValue);
+
+            // Compute average KPIs per counselor
+            var averageKPIsPerCounselor = kpiEntries
+                .Where(k => k.Counselor != null) // Exclude department-wide KPIs like Enquiries
+                .GroupBy(k => k.Counselor.Name)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Average(k => (double)k.Value)
+                );
+
+            // Prepare chart data for Admissions
+            var admissionsChartData = admissionsKPIs
+                .GroupBy(k => new { k.Date, k.KPItype })
+                .Select(g => new ChartData
+                {
+                    Label = $"{g.Key.Date:yyyy-MM-dd} {g.Key.KPItype}",
+                    Value = g.Sum(k => k.TotalValue),
+                    KPItype = g.Key.KPItype
+                })
+                .OrderBy(c => c.Label)
+                .ToList();
+
+            // Prepare chart data for Vasa Consulting
+            var vasaConsultingChartData = vasaConsultingKPIs
+                .GroupBy(k => new { k.Date, k.KPItype })
+                .Select(g => new ChartData
+                {
+                    Label = $"{g.Key.Date:yyyy-MM-dd} {g.Key.KPItype}",
+                    Value = g.Sum(k => k.TotalValue),
+                    KPItype = g.Key.KPItype
+                })
+                .OrderBy(c => c.Label)
+                .ToList();
+
             var model = new DashboardViewModel
             {
                 StartDate = startDate,
@@ -82,7 +119,12 @@ namespace VXL_KPI_system.Controllers
                 SelectedDepartment = department ?? "All",
                 Departments = departments,
                 AdmissionsKPIs = admissionsKPIs,
-                VasaConsultingKPIs = vasaConsultingKPIs
+                VasaConsultingKPIs = vasaConsultingKPIs,
+                TotalAdmissionsKPIs = totalAdmissionsKPIs,
+                TotalVasaConsultingKPIs = totalVasaConsultingKPIs,
+                AverageKPIsPerCounselor = averageKPIsPerCounselor,
+                AdmissionsChartData = admissionsChartData,
+                VasaConsultingChartData = vasaConsultingChartData
             };
 
             Console.WriteLine($"Loaded Dashboard: {admissionsKPIs.Count} Admissions KPIs, {vasaConsultingKPIs.Count} Vasa Consulting KPIs");

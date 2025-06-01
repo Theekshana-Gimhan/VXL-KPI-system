@@ -25,10 +25,68 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Apply Filters</button>
-    <button type="button" class="btn btn-secondary" onclick="window.location.href=window.location.href">Refresh</button>
+    <button type="button" id="toggleRefresh" class="btn btn-secondary">Start Auto-Refresh</button>
 </form>
 
-<!-- Admissions KPIs -->
+<!-- Detailed Metrics -->
+<h3>Summary Metrics</h3>
+<div class="metrics-container">
+    <div class="metric-box">
+        <strong>Total Admissions KPIs:</strong> @Model.TotalAdmissionsKPIs
+    </div>
+    <div class="metric-box">
+        <strong>Total Vasa Consulting KPIs:</strong> @Model.TotalVasaConsultingKPIs
+    </div>
+</div>
+
+<h4>Average KPIs per Counselor</h4>
+@if (Model.AverageKPIsPerCounselor.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Counselor</th>
+                <th>Average KPI Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var avg in Model.AverageKPIsPerCounselor)
+            {
+                <tr>
+                    <td>@avg.Key</td>
+                    <td>@avg.Value.ToString("F2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No counselor-specific KPIs available.</p>
+}
+
+<!-- Charts -->
+<h3>Admissions KPI Trends</h3>
+@if (Model.AdmissionsChartData.Any())
+{
+    <canvas id="admissionsChart" width="400" height="200"></canvas>
+}
+else
+{
+    <p>No Admissions KPI data available for charting.</p>
+}
+
+<h3>Vasa Consulting KPI Trends</h3>
+@if (Model.VasaConsultingChartData.Any())
+{
+    <canvas id="vasaConsultingChart" width="400" height="200"></canvas>
+}
+else
+{
+    <p>No Vasa Consulting KPI data available for charting.</p>
+}
+
+<!-- Admissions KPIs Table -->
 <h3>Admissions</h3>
 @if (Model.AdmissionsKPIs.Any())
 {
@@ -59,7 +117,7 @@ else
     <p>No Admissions KPIs available for the selected filters.</p>
 }
 
-<!-- Vasa Consulting KPIs -->
+<!-- Vasa Consulting KPIs Table -->
 <h3>Vasa Consulting</h3>
 @if (Model.VasaConsultingKPIs.Any())
 {
@@ -96,14 +154,143 @@ else
         gap: 15px;
         margin-bottom: 20px;
     }
+
     .form-group {
         margin-bottom: 0;
     }
+
     .form-control {
         display: inline-block;
         width: auto;
     }
+
     .table {
         margin-bottom: 20px;
     }
+
+    .metrics-container {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .metric-box {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+    }
 </style>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+    // Auto-refresh logic
+    let autoRefreshInterval = null;
+    const toggleRefreshButton = document.getElementById('toggleRefresh');
+
+    function toggleAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+            toggleRefreshButton.textContent = 'Start Auto-Refresh';
+            toggleRefreshButton.classList.remove('btn-danger');
+            toggleRefreshButton.classList.add('btn-secondary');
+        } else {
+            autoRefreshInterval = setInterval(() => {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const department = document.getElementById('department').value;
+                const url = `@Url.Action("Index", "Dashboard")?startDate=${startDate}&endDate=${endDate}&department=${department}`;
+                window.location.href = url;
+            }, 10000);
+            toggleRefreshButton.textContent = 'Stop Auto-Refresh';
+            toggleRefreshButton.classList.remove('btn-secondary');
+            toggleRefreshButton.classList.add('btn-danger');
+        }
+    }
+
+    toggleRefreshButton.addEventListener('click', toggleAutoRefresh);
+
+    // Chart for Admissions
+    if (document.getElementById('admissionsChart')) {
+        const admissionsCtx = document.getElementById('admissionsChart').getContext('2d');
+        const admissionsData = @Html.Raw(Json.Serialize(Model.AdmissionsChartData));
+        const admissionsLabels = admissionsData.map(d => d.label);
+        const applicationsData = admissionsData.filter(d => d.kpiType === 'Applications').map(d => d.value);
+        const consultationsData = admissionsData.filter(d => d.kpiType === 'Consultations').map(d => d.value);
+
+        new Chart(admissionsCtx, {
+            type: 'line',
+            data: {
+                labels: [...new Set(admissionsLabels.map(l => l.split(' ')[0]))], // Dates only
+                datasets: [
+                    {
+                        label: 'Applications',
+                        data: applicationsData,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'Consultations',
+                        data: consultationsData,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Date' } },
+                    y: { title: { display: true, text: 'Value' }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Chart for Vasa Consulting
+    if (document.getElementById('vasaConsultingChart')) {
+        const vasaConsultingCtx = document.getElementById('vasaConsultingChart').getContext('2d');
+        const vasaConsultingData = @Html.Raw(Json.Serialize(Model.VasaConsultingChartData));
+        const vasaConsultingLabels = vasaConsultingData.map(d => d.label);
+        const enquiriesData = vasaConsultingData.filter(d => d.kpiType === 'Enquiries').map(d => d.value);
+        const consultationsData = vasaConsultingData.filter(d => d.kpiType === 'Consultations').map(d => d.value);
+        const conversionsData = vasaConsultingData.filter(d => d.kpiType === 'Conversions').map(d => d.value);
+
+        new Chart(vasaConsultingCtx, {
+            type: 'line',
+            data: {
+                labels: [...new Set(vasaConsultingLabels.map(l => l.split(' ')[0]))], // Dates only
+                datasets: [
+                    {
+                        label: 'Enquiries',
+                        data: enquiriesData,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'Consultations',
+                        data: consultationsData,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'Conversions',
+                        data: conversionsData,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Date' } },
+                    y: { title: { display: true, text: 'Value' }, beginAtZero: true }
+                }
+            }
+        });
+    }
+</script>
