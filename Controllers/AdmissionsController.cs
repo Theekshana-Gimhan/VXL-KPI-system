@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VXL_KPI_system.Data;
 
+[Authorize(Roles = "Admin, Counselor")]
 public class AdmissionsController : Controller
 {
     private readonly ApplicationDbContext _context;

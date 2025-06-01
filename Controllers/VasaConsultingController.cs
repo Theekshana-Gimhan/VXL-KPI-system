@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VXL_KPI_system.Data;
 using VXL_KPI_system.Data; // Replace with your project namespace
 using VXL_KPI_system.Models; // Replace with your project namespace
 
 namespace VXL_KPI_system.Controllers
 {
+    [Authorize(Roles = "Admin, Counselor")]
     public class VasaConsultingController : Controller
     {
         private readonly ApplicationDbContext _context;
