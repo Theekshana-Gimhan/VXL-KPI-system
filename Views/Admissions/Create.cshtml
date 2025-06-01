@@ -1,25 +1,48 @@
 ﻿@model AdmissionsDataEntryViewModel
 
 <h2>Admissions KPI Entry</h2>
-<form asp-action="Create" method="post">
-    <div>
+
+<form asp-action="Create" asp-controller="Admissions" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
         <label for="Date">Date:</label>
-        <input type="date" asp-for="Date" class="form-control" />
+        <input type="date" asp-for="Date" class="form-control" required />
+        <span asp-validation-for="Date" class="text-danger"></span>
     </div>
 
     @for (int i = 0; i < Model.CounselorKPIs.Count; i++)
     {
         <h3>@Model.CounselorKPIs[i].CounselorName</h3>
         <input type="hidden" asp-for="CounselorKPIs[i].CounselorID" />
-        <div>
+        <input type="hidden" asp-for="CounselorKPIs[i].CounselorName" />
+
+        <div class="form-group">
             <label for="CounselorKPIs_@(i)__Applications">Applications:</label>
-            <input type="number" asp-for="CounselorKPIs[i].Applications" class="form-control" min="0" />
+            <input type="number" asp-for="CounselorKPIs[i].Applications" class="form-control" min="0" value="0" />
+            <span asp-validation-for="CounselorKPIs[i].Applications" class="text-danger"></span>
         </div>
-        <div>
+
+        <div class="form-group">
             <label for="CounselorKPIs_@(i)__Consultations">Consultations:</label>
-            <input type="number" asp-for="CounselorKPIs[i].Consultations" class="form-control" min="0" />
+            <input type="number" asp-for="CounselorKPIs[i].Consultations" class="form-control" min="0" value="0" />
+            <span asp-validation-for="CounselorKPIs[i].Consultations" class="text-danger"></span>
         </div>
     }
 
     <button type="submit" class="btn btn-primary">Save</button>
 </form>
+
+<style>
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .btn-primary {
+        margin-top: 10px;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,30 +1,54 @@
 ﻿@model VasaConsultingDataEntryViewModel
 
 <h2>Vasa Consulting KPI Entry</h2>
-<form asp-action="Create" method="post">
-    <div>
+
+<form asp-action="Create" asp-controller="VasaConsulting" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
         <label for="Date">Date:</label>
-        <input type="date" asp-for="Date" class="form-control" />
+        <input type="date" asp-for="Date" class="form-control" required />
+        <span asp-validation-for="Date" class="text-danger"></span>
     </div>
 
-    <div>
+    <div class="form-group">
         <label for="Enquiries">Enquiries:</label>
-        <input type="number" asp-for="Enquiries" class="form-control" min="0" />
+        <input type="number" asp-for="Enquiries" class="form-control" min="0" value="0" />
+        <span asp-validation-for="Enquiries" class="text-danger"></span>
     </div>
 
     @for (int i = 0; i < Model.StaffKPIs.Count; i++)
     {
         <h3>@Model.StaffKPIs[i].StaffName</h3>
         <input type="hidden" asp-for="StaffKPIs[i].CounselorID" />
-        <div>
+        <input type="hidden" asp-for="StaffKPIs[i].StaffName" />
+
+        <div class="form-group">
             <label for="StaffKPIs_@(i)__Consultations">Consultations:</label>
-            <input type="number" asp-for="StaffKPIs[i].Consultations" class="form-control" min="0" />
+            <input type="number" asp-for="StaffKPIs[i].Consultations" class="form-control" min="0" value="0" />
+            <span asp-validation-for="StaffKPIs[i].Consultations" class="text-danger"></span>
         </div>
-        <div>
+
+        <div class="form-group">
             <label for="StaffKPIs_@(i)__Conversions">Conversions:</label>
-            <input type="number" asp-for="StaffKPIs[i].Conversions" class="form-control" min="0" />
+            <input type="number" asp-for="StaffKPIs[i].Conversions" class="form-control" min="0" value="0" />
+            <span asp-validation-for="StaffKPIs[i].Conversions" class="text-danger"></span>
         </div>
     }
 
     <button type="submit" class="btn btn-primary">Save</button>
 </form>
+
+<style>
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .btn-primary {
+        margin-top: 10px;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -16,31 +16,62 @@ namespace VXL_KPI_system.Controllers
             _context = context;
         }
 
-        // GET: VasaConsulting/Create
+        [HttpGet]
         public IActionResult Create()
         {
-            var vasaConsulting = _context.Departments.FirstOrDefault(d => d.Name == "Vasa Consulting");
-            var counselors = _context.Counselors.Where(c => c.DepartmentID == vasaConsulting.DepartmentID).ToList();
-            var viewModel = new VasaConsultingDataEntryViewModel
+            var counselors = _context.Counselors
+                .Where(c => c.Department.Name == "Vasa Consulting")
+                .ToList();
+
+            var model = new VasaConsultingDataEntryViewModel
             {
                 Date = DateTime.Today,
-                Enquiries = 0, // Default value, user will update
+                Enquiries = 0,
                 StaffKPIs = counselors.Select(c => new StaffKPI
                 {
                     CounselorID = c.CounselorID,
-                    StaffName = c.Name
+                    StaffName = c.Name,
+                    Consultations = 0,
+                    Conversions = 0
                 }).ToList()
             };
-            return View(viewModel);
+
+            if (!model.StaffKPIs.Any())
+            {
+                Console.WriteLine("No staff found for Vasa Consulting department!");
+            }
+            else
+            {
+                Console.WriteLine($"Loaded {model.StaffKPIs.Count} staff for Vasa Consulting form");
+            }
+
+            return View(model);
         }
 
-        // POST: VasaConsulting/Create
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Create(VasaConsultingDataEntryViewModel model)
         {
-            if (ModelState.IsValid)
+            Console.WriteLine("Received POST request for VasaConsulting/Create");
+
+            if (!ModelState.IsValid)
             {
+                Console.WriteLine("ModelState is invalid. Errors: " + string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                return View(model);
+            }
+
+            try
+            {
+                Console.WriteLine("Starting to process Vasa Consulting KPI data...");
                 var vasaConsulting = _context.Departments.FirstOrDefault(d => d.Name == "Vasa Consulting");
+                if (vasaConsulting == null)
+                {
+                    Console.WriteLine("Vasa Consulting department not found in the database!");
+                    return View(model);
+                }
+
+                int entriesAdded = 0;
+
                 // Save Enquiries (department-wide KPI)
                 if (model.Enquiries > 0)
                 {
@@ -51,11 +82,14 @@ namespace VXL_KPI_system.Controllers
                         KPItype = "Enquiries",
                         Value = model.Enquiries
                     });
+                    entriesAdded++;
+                    Console.WriteLine($"Added Enquiries entry: {model.Enquiries}");
                 }
 
                 // Save Consultations and Conversions per staff
                 foreach (var kpi in model.StaffKPIs)
                 {
+                    Console.WriteLine($"Processing StaffID: {kpi.CounselorID}, Consultations: {kpi.Consultations}, Conversions: {kpi.Conversions}");
                     if (kpi.Consultations > 0)
                     {
                         _context.KPIEntries.Add(new KPIEntry
@@ -66,6 +100,8 @@ namespace VXL_KPI_system.Controllers
                             KPItype = "Consultations",
                             Value = kpi.Consultations
                         });
+                        entriesAdded++;
+                        Console.WriteLine($"Added Consultations entry: {kpi.Consultations}");
                     }
                     if (kpi.Conversions > 0)
                     {
@@ -77,12 +113,26 @@ namespace VXL_KPI_system.Controllers
                             KPItype = "Conversions",
                             Value = kpi.Conversions
                         });
+                        entriesAdded++;
+                        Console.WriteLine($"Added Conversions entry: {kpi.Conversions}");
                     }
                 }
+
+                if (entriesAdded == 0)
+                {
+                    Console.WriteLine("No KPI entries were added (all values might be 0)");
+                    return View(model);
+                }
+
                 _context.SaveChanges();
+                Console.WriteLine($"Successfully saved {entriesAdded} KPI entries, redirecting to Home/Index");
                 return RedirectToAction("Index", "Home");
             }
-            return View(model);
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error saving data: " + ex.Message);
+                return View(model);
+            }
         }
     }
 }
