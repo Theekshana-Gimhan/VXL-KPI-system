@@ -1,43 +1,28 @@
-﻿@model dynamic
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 
-@{
-    ViewData["Title"] = "Home Page";
-}
+<h1>Welcome to the KPI Monitoring System</h1>
 
-<h2>Welcome to KPI Monitoring System</h2>
-
-@if (User.IsInRole("Admin") || User.IsInRole("Counselor"))
-{
-    <div class="button-container">
-        <a asp-action="Create" asp-controller="Admissions" class="btn btn-primary">Add Admissions KPI</a>
-        <a asp-action="Create" asp-controller="VasaConsulting" class="btn btn-primary">Add Vasa Consulting KPI</a>
+<div class="button-container">
+    @if (User.IsInRole("Staff"))
+    {
+        <a asp-controller="Admissions" asp-action="Create" class="btn btn-primary">Add Admissions KPI</a>
+        <a asp-controller="VasaConsulting" asp-action="Create" class="btn btn-primary">Add Vasa Consulting KPI</a>
+    }
+    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+    {
         <a asp-controller="Dashboard" asp-action="Index" class="btn btn-success">View Dashboard</a>
-    </div>
-}
-else
-{
-    <p>You do not have permission to add KPI data. Please contact an administrator.</p>
-}
+    }
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-controller="Admin" asp-action="Index" class="btn btn-info">User Management</a>
+    }
+</div>
 
 <style>
     .button-container {
-        margin-top: 20px;
         display: flex;
         gap: 15px;
+        margin-top: 20px;
     }
-
-    .btn {
-        margin-right: 10px;
-        padding: 10px 20px;
-        text-decoration: none;
-        color: white;
-    }
-
-    .btn-primary {
-        background-color: #007bff;
-    }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
 </style>

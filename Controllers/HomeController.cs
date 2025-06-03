@@ -1,36 +1,60 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using VXL_KPI_system.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
-namespace VXL_KPI_system.Controllers
+namespace YourProjectName.Controllers
 {
     [Authorize]
     public class HomeController : Controller
     {
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
-            _logger = logger;
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
 
-        // Removed duplicate Index method to resolve CS0111 error
         public IActionResult Index()
         {
             return View();
         }
 
-        public IActionResult Privacy()
+        // Temporary endpoint to reassign roles (run once, then remove)
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> ReassignRoles()
         {
-            return View();
-        }
+            // Example: Reassign all users with old roles to new roles
+            var users = await _userManager.Users.ToListAsync();
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            foreach (var user in users)
+            {
+                // Remove old roles (e.g., "Admissions", "Vasa Consulting")
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Contains("Admissions") || currentRoles.Contains("Vasa Consulting"))
+                {
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+                    // Assign new role based on some logic
+                    string newRole = "Staff"; // Default to Staff
+                    if (user.Email == "admin@example.com") // Example condition
+                    {
+                        newRole = "Admin";
+                    }
+                    else if (user.Email.EndsWith("@manager.com")) // Example condition
+                    {
+                        newRole = "Manager";
+                    }
+
+                    await _userManager.AddToRoleAsync(user, newRole);
+                }
+            }
+
+            return Content("Roles reassigned successfully!");
         }
     }
 }

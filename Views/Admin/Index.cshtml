@@ -1,0 +1,46 @@
+﻿@model IEnumerable<VXL_KPI_system.Controllers.UserRolesViewModel>
+
+<h1>User Management</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<p>
+    <a asp-action="AddUser" class="btn btn-primary">Add New User</a>
+</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@string.Join(", ", user.Roles)</td>
+                <td>
+                    <a asp-action="EditUserRoles" asp-route-id="@user.UserId" class="btn btn-sm btn-warning">Edit Roles</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .btn-sm {
+        margin-right: 5px;
+    }
+</style>

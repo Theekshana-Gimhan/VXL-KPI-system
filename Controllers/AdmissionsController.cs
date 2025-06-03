@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VXL_KPI_system.Data;
+using Microsoft.EntityFrameworkCore;
 using VXL_KPI_system.Data; // Replace with your project namespace
 using VXL_KPI_system.Models; // Replace with your project namespace
+using System;
+using System.Threading.Tasks;
+using VXL_KPI_system.Data;
 
-namespace YourProjectName.Controllers
+namespace VXL_KPI_system.Controllers
 {
-    [Authorize(Roles = "Admin, Counselor")]
+    [Authorize(Roles = "Staff")]
     public class AdmissionsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -19,103 +22,35 @@ namespace YourProjectName.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var counselors = _context.Counselors
-                .Where(c => c.Department.Name == "Admissions")
-                .ToList();
-
-            var model = new AdmissionsDataEntryViewModel
-            {
-                Date = DateTime.Today,
-                CounselorKPIs = counselors.Select(c => new CounselorKPI
-                {
-                    CounselorID = c.CounselorID,
-                    CounselorName = c.Name,
-                    Applications = 0,
-                    Consultations = 0
-                }).ToList()
-            };
-
-            if (!model.CounselorKPIs.Any())
-            {
-                Console.WriteLine("No counselors found for Admissions department!");
-            }
-            else
-            {
-                Console.WriteLine($"Loaded {model.CounselorKPIs.Count} counselors for Admissions form");
-            }
-
-            return View(model);
+            return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(AdmissionsDataEntryViewModel model)
+        public async Task<IActionResult> Create(KPIEntry model)
         {
-            Console.WriteLine("Received POST request for Admissions/Create");
-
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                Console.WriteLine("ModelState is invalid. Errors: " + string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-                return View(model);
-            }
-
-            try
-            {
-                Console.WriteLine("Starting to process Admissions KPI data...");
-                var admissions = _context.Departments.FirstOrDefault(d => d.Name == "Admissions");
-                if (admissions == null)
+                model.Department = await _context.Departments.FirstOrDefaultAsync(d => d.Name == "Admissions");
+                if (model.Department == null)
                 {
-                    Console.WriteLine("Admissions department not found in the database!");
+                    ModelState.AddModelError("", "Admissions department not found.");
                     return View(model);
                 }
-
-                int entriesAdded = 0;
-                foreach (var kpi in model.CounselorKPIs)
+                // Find the counselor by username
+                var counselor = await _context.Counselors.FirstOrDefaultAsync(c => c.Name == User.Identity.Name);
+                if (counselor == null)
                 {
-                    Console.WriteLine($"Processing CounselorID: {kpi.CounselorID}, Applications: {kpi.Applications}, Consultations: {kpi.Consultations}");
-                    if (kpi.Applications > 0)
-                    {
-                        _context.KPIEntries.Add(new KPIEntry
-                        {
-                            DepartmentID = admissions.DepartmentID,
-                            CounselorID = kpi.CounselorID,
-                            Date = model.Date,
-                            KPItype = "Applications",
-                            Value = kpi.Applications
-                        });
-                        entriesAdded++;
-                        Console.WriteLine($"Added Applications entry: {kpi.Applications}");
-                    }
-                    if (kpi.Consultations > 0)
-                    {
-                        _context.KPIEntries.Add(new KPIEntry
-                        {
-                            DepartmentID = admissions.DepartmentID,
-                            CounselorID = kpi.CounselorID,
-                            Date = model.Date,
-                            KPItype = "Consultations",
-                            Value = kpi.Consultations
-                        });
-                        entriesAdded++;
-                        Console.WriteLine($"Added Consultations entry: {kpi.Consultations}");
-                    }
-                }
-
-                if (entriesAdded == 0)
-                {
-                    Console.WriteLine("No KPI entries were added (all values might be 0)");
+                    ModelState.AddModelError("", "Counselor not found.");
                     return View(model);
                 }
+                model.CounselorID = counselor.CounselorID;
 
-                _context.SaveChanges();
-                Console.WriteLine($"Successfully saved {entriesAdded} KPI entries, redirecting to Home/Index");
+                _context.KPIEntries.Add(model);
+                await _context.SaveChangesAsync();
                 return RedirectToAction("Index", "Home");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error saving data: " + ex.Message);
-                return View(model);
-            }
+            return View(model);
         }
     }
 }

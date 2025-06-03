@@ -10,12 +10,11 @@ using VXL_KPI_system.Data;
 
 namespace VXL_KPI_system.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,Manager")]
     public class DashboardController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        // Set QuestPDF license to Community at class initialization
         static DashboardController()
         {
             QuestPDF.Settings.License = LicenseType.Community;
@@ -189,7 +188,6 @@ namespace VXL_KPI_system.Controllers
                     g => g.Average(k => (double)k.Value)
                 );
 
-            // Generate PDF using QuestPDF
             var pdf = Document.Create(container =>
             {
                 container.Page(page =>
@@ -289,14 +287,11 @@ namespace VXL_KPI_system.Controllers
                         });
                     });
 
-                    // Updated footer syntax for QuestPDF 2025.5.0
                     page.Footer().AlignCenter().Text("Page {pageNumber} of {totalPages}");
                 });
             });
 
             byte[] pdfBytes = pdf.GeneratePdf();
-
-            // Return the PDF as a file download
             return File(pdfBytes, "application/pdf", $"KPI_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
         }
 
